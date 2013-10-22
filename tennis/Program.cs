@@ -15,12 +15,12 @@ namespace tennis
 				b.run ();
 				b.print_log ();
 				if ((cross (b.r, field.p0.y, b.p.y)) || (cross (b.r, field.p1.y, b.p.y))) {
-					b.angle = 360 - b.angle;  //!!!!
+					b.angle = 360 - b.angle; 
 				}
 
 				if ((cross (b.r, hand1.p1.x, b.p.x)) && (b.p.y >= hand1.p1.y) && (b.p.y <= hand1.p0.y)
 				    || (cross (b.r, hand2.p0.x, b.p.x)) && (b.p.y >= hand2.p1.y) && (b.p.y <= hand2.p0.y)) {
-					b.angle = 180 - b.angle; //!!!!
+					b.angle = 180 - b.angle;
 				}
 
 				if ((cross (b.r, field.p0.x, b.p.x)) || (cross (b.r, field.p1.x, b.p.x))) {
