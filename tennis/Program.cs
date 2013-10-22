@@ -13,7 +13,25 @@ namespace tennis
 
 			while (true) {
 				b.run ();
+				b.print_log ();
+				if ((cross (b.r, field.p0.y, b.p.y)) || (cross (b.r, field.p1.y, b.p.y))) {
+					b.angle = 360 - b.angle;  //!!!!
+				}
+
+				if ((cross (b.r, hand1.p1.x, b.p.x)) && (b.p.y >= hand1.p1.y) && (b.p.y <= hand1.p0.y)
+				    || (cross (b.r, hand2.p0.x, b.p.x)) && (b.p.y >= hand2.p1.y) && (b.p.y <= hand2.p0.y)) {
+					b.angle = 180 - b.angle; //!!!!
+				}
+
+				if ((cross (b.r, field.p0.x, b.p.x)) || (cross (b.r, field.p1.x, b.p.x))) {
+					Console.WriteLine ("Game over!");
+					break;
+				}
 			}
+		}
+
+		public static Boolean cross (float r, float c0, float c1) {
+			return (r * r - Math.Pow ((c0 - c1), 2)) >= 0;
 		}
 	}
 
@@ -33,6 +51,8 @@ namespace tennis
 			p.y = y;
 			this.r = r;
 			this.set_base ();
+
+			this.speed = 1;
 
 			Random rand = new Random ();
 			angle = rand.Next (-89, 89);
@@ -54,6 +74,10 @@ namespace tennis
 				p.y = t * p.x + (p0.y - p0.x);
 			else
 				p.y = t * p.x + (p0.y + p0.x);
+		}
+
+		public void print_log () {
+			Console.WriteLine ("X - " + this.p.x.ToString("R") + " Y - " + this.p.y.ToString("R") + "A - "+this.angle.ToString("R"));
 		}
 	}
 
