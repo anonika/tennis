@@ -11,6 +11,7 @@ namespace tennis
 			Rect hand1 = new Rect (-9, 0, 1, 0.5f);
 			Rect hand2 = new Rect (9, 0, 1, 0.5f);
 
+
 			while (true) {
 				b.run ();
 				b.print_log ();
@@ -35,13 +36,33 @@ namespace tennis
 		}
 	}
 
+	interface IView {
+		void Render ();
+	}
+
+	interface IModel {
+		Point P {
+			get;
+			set;
+		}
+	}
+
 	class Point {
 		public float x,y;
 	}
 
-	class Ball {
+	class Ball : IView, IModel {
 		public Point p0, p;
 		public float angle, speed, r;
+
+		public Point P {
+			get {
+				return p;
+			}
+			set {
+				p = value;
+			}
+		}
 
 		public Ball (float x, float y, float r) {
 			p0 = new Point ();
@@ -79,11 +100,22 @@ namespace tennis
 		public void print_log () {
 			Console.WriteLine ("X - " + this.p.x.ToString("R") + " Y - " + this.p.y.ToString("R") + "A - "+this.angle.ToString("R"));
 		}
+		public void Render (){
+		}
 	}
 
 	class Rect {
 		public Point p0, p1, p;
 		public float a, b;
+
+		public Point P {
+			get {
+				return p;
+			}
+			set {
+				p = value;
+			}
+		}
 
 		public Rect(float x, float y, float a, float  b) {
 			p0 = new Point ();
@@ -101,6 +133,9 @@ namespace tennis
 
 			p1.x = x + b / 2;
 			p1.y = y - a / 2;
+		}
+		public void Render () {
+
 		}
 	}
 }
