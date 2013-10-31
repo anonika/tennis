@@ -18,6 +18,8 @@ namespace tennis
 			Rect hand1 = new Rect (-9, 0, 1, 0.5f);
 			Rect hand2 = new Rect (9, 0, 1, 0.5f);
 
+			Controller c = new Controller ();
+			//model.
 			
 			// Часть логики обработки состояния у тебя находиться 
 			// непосредственно во входной точке приложения, а другая
@@ -27,31 +29,12 @@ namespace tennis
 		    // мы можем заставить шарик двигаться как-то иначе. Но почему 
 			// тогда логика столконвений задается не в классе Rect или
 			// его наследние?
-			while (true) {
-				b.run ();
-				b.print_log ();
-				
-				// Все три условия взаимоисключающие. Если одно из них выполнилось,
-				// то не имеет смыла проверять все остальные.
-				if ((cross (b.r, field.p0.y, b.p.y)) || (cross (b.r, field.p1.y, b.p.y))) {
-					b.angle = 360 - b.angle; 
-				}
-
-				if ((cross (b.r, hand1.p1.x, b.p.x)) && (b.p.y >= hand1.p1.y) && (b.p.y <= hand1.p0.y)
-				    || (cross (b.r, hand2.p0.x, b.p.x)) && (b.p.y >= hand2.p1.y) && (b.p.y <= hand2.p0.y)) {
-					b.angle = 180 - b.angle;
-				}
-
-				if ((cross (b.r, field.p0.x, b.p.x)) || (cross (b.r, field.p1.x, b.p.x))) {
-					Console.WriteLine ("Game over!");
-					break;
-				}
+			while (c.move (b, hand1, hand2, field)) {
+				//b.print_log ();
+				// определение нажатия на кнопку
 			}
 		}
-
-		public static Boolean cross (float r, float c0, float c1) {
-			return (r * r - Math.Pow ((c0 - c1), 2)) >= 0;
-		}
+		
 	}
 
 	interface IView {
@@ -65,11 +48,60 @@ namespace tennis
 		}
 	}
 
+	interface IModelBall : IModel{
+		float Angle {
+			get;
+			set;
+		}
+	}
+
+	class Controller {
+		IView view;
+		public void move (Rect o, int v) {
+			Point p = new Point ();
+			p.y += v;
+
+			IModel model;
+			model = o;
+			model.P = p;
+
+			view = o;
+			view.Render ();
+		}
+
+		public Boolean move (Ball o, Rect h1, Rect h2, Rect f) {
+			IModelBall model;
+			model = o;
+
+			Point p = new Point ();
+			p.x += (float) Math.Cos (model.Angle) * o.speed;
+			float t = (float) Math.Tan (model.Angle * Math.PI / 180);
+			if (t >= 0)
+				p.y = t * p.x + (o.p0.y - o.p0.x);
+			else
+				p.y = t * p.x + (o.p0.y + o.p0.x);
+
+			model.P = p;
+
+			if (o.cross (h1, h2)) {
+				model.Angle = 180 - model.Angle;
+				return true;
+			} else if (o.cross (f) == 1) {
+				model.Angle = 360 - model.Angle;
+				return true;
+			} else if (o.cross (f) == -1) {
+				Console.WriteLine ("Game over!"); // не пришей *** рукав!
+				return false;
+			}
+			return true;
+		}
+	}
+
 	class Point {
 		public float x,y;
 	}
 
-	class Ball : IView, IModel {
+	class Ball : IView, IModelBall {
 		public Point p0, p;
 		public float angle, speed, r;
 
@@ -79,6 +111,15 @@ namespace tennis
 			}
 			set {
 				p = value;
+			}
+		}
+
+		public float Angle {
+			get {
+				return angle;
+			}
+			set {
+				angle = value;
 			}
 		}
 
@@ -106,23 +147,35 @@ namespace tennis
 			speed *= -1; 
 		}
 
-		public void run () {
-			p.x += (float) Math.Cos (angle) * speed;
-			float t = (float) Math.Tan (angle * Math.PI / 180);
-			if (t >= 0)
-				p.y = t * p.x + (p0.y - p0.x);
-			else
-				p.y = t * p.x + (p0.y + p0.x);
-		}
-
 		public void print_log () {
 			Console.WriteLine ("X - " + this.p.x.ToString("R") + " Y - " + this.p.y.ToString("R") + "A - "+this.angle.ToString("R"));
 		}
-		public void Render (){
+
+		public int cross (Rect f) {
+			if ((cross (r, f.p0.y, p.y)) || (cross (r, f.p1.y, p.y))) 
+				return 1;
+			else if ((cross (r, f.p0.x, p.x)) || (cross (r, f.p1.x, p.x)))
+				return -1;
+			else
+				return 0;
+		} 
+
+		public Boolean cross (Rect h1, Rect h2) {
+			return ((cross (r, h1.p1.x, p.x)) && (p.y >= h1.p1.y) && (p.y <= h1.p0.y)
+				|| (cross (r, h2.p0.x, p.x)) && (p.y >= h2.p1.y) && (p.y <= h2.p0.y));
 		}
+
+		public Boolean cross (float r, float c0, float c1) {
+			return (r * r - Math.Pow ((c0 - c1), 2)) >= 0;
+		}
+
+		public void Render (){
+			// закрашиваем по цвету фона, рисуем в новом месте
+		}
+
 	}
 
-	class Rect {
+	class Rect : IView, IModel{
 		public Point p0, p1, p;
 		public float a, b;
 
@@ -132,6 +185,7 @@ namespace tennis
 			}
 			set {
 				p = value;
+				reset_coord ();
 			}
 		}
 
@@ -143,17 +197,22 @@ namespace tennis
 			this.a = a;
 			this.b = b;
 
-			p.x = x;
-			p.y = y;
-
-			p0.x = x - b / 2;
-			p0.y = y + a / 2;
-
-			p1.x = x + b / 2;
-			p1.y = y - a / 2;
+			Point t = new Point ();
+			t.x = x;
+			t.y = y;
+			P = t;
 		}
-		public void Render () {
 
+		private void reset_coord () {
+			p0.x = p.x - b / 2;
+			p0.y = p.y + a / 2;
+
+			p1.x = p.x + b / 2;
+			p1.y = p.y - a / 2;
+		}
+
+		public void Render () {
+			// закрашиваем по цвету фона, рисуем в новом месте
 		}
 	}
 }
